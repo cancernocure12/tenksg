@@ -1,7 +1,8 @@
 
 package Main;
 
-import admindashboard.admindasboard;
+import config.config;
+import admindashboard.admindashboard;
 import java.awt.Cursor;
 import userdashboard.userdashboard;
 import java.sql.Connection;
@@ -10,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.swing.JOptionPane;
-import Main.Session;
+import config.Session;
 
 public class login extends javax.swing.JFrame {
 
@@ -146,9 +147,10 @@ public class login extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        String email = jTextField2.getText().trim(); // assuming jTextField1 is email
-        String password = jTextField3.getText().trim(); // jTextField2 is password
+      String email = jTextField2.getText().trim();
+    String password = jTextField3.getText().trim();
 
+    // ✅ Check empty fields
     if (email.isEmpty() || password.isEmpty()) {
         JOptionPane.showMessageDialog(this,
                 "Please enter email and password.",
@@ -157,51 +159,76 @@ public class login extends javax.swing.JFrame {
         return;
     }
 
-    try {
-        Connection conn = config.connectDB(); // Connect to SQLite
-        String sql = "SELECT u_id, u_status FROM tbl_accounts WHERE u_email = ? AND u_password = ?";
-        PreparedStatement pst = conn.prepareStatement(sql);
+    String sql = "SELECT * FROM tbl_accounts WHERE u_email=? AND u_password=?";
+
+    try (Connection conn = config.connectDB();
+         PreparedStatement pst = conn.prepareStatement(sql)) {
+
         pst.setString(1, email);
         pst.setString(2, password);
+
         ResultSet rs = pst.executeQuery();
 
         if (rs.next()) {
-            Main.Session.userId = rs.getInt("u_id");
-            String role = rs.getString("u_status"); // get user role/status
-            role = role.trim();
-            
-            System.out.println("ROLE=[" + role + "]");
-            
-                                        // Redirect to respective dashboard
-            if (role.equalsIgnoreCase("ADMIN"))  {
-                new admindasboard().setVisible(true);
-            } else if (role.equalsIgnoreCase("USER")) {
-                new userdashboard().setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this,
-                "Unknown role: [" + role + "]",
-                "Login Error",
-                JOptionPane.ERROR_MESSAGE);
-            return; 
-                    }
 
-            this.dispose(); // close login form
-        } else {
+            String status = rs.getString("u_status");
+            String role   = rs.getString("u_role");
+
+            // ✅ Only allow Approved accounts
+            if (!"Approved".equalsIgnoreCase(status)) {
+                JOptionPane.showMessageDialog(this,
+                        "Your account is not approved yet.",
+                        "Access Denied",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // ✅ Set Session correctly
+            Session.setSession(
+                    rs.getInt("u_id"),
+                    rs.getString("u_fname") + " " + rs.getString("u_lname"),
+                    rs.getString("u_email"),
+                    role,
+                    status
+            );
+
             JOptionPane.showMessageDialog(this,
-                    "Invalid email or password.",
+                    "Welcome, " + Session.getName() + "!");
+
+            // ✅ Redirect by role
+            if ("ADMIN".equalsIgnoreCase(role)) {
+
+                new admindashboard().setVisible(true);
+
+            } else if ("USER".equalsIgnoreCase(role)) {
+
+                new userdashboard().setVisible(true);
+
+            } else {
+
+                JOptionPane.showMessageDialog(this,
+                        "Invalid role detected.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+
+                Session.logout();
+                return;
+            }
+
+            dispose(); // close login window
+
+        } else {
+
+            JOptionPane.showMessageDialog(this,
+                    "Invalid Email or Password.",
                     "Login Failed",
                     JOptionPane.ERROR_MESSAGE);
         }
 
-        rs.close();
-        pst.close();
-        conn.close();
-
     } catch (SQLException e) {
         JOptionPane.showMessageDialog(this,
-                "Database error: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                "Database error: " + e.getMessage());
+        e.printStackTrace();
     }
     }//GEN-LAST:event_jButton3ActionPerformed
 

@@ -1,26 +1,30 @@
 
 package admindashboard;
-import Main.config;
+import config.config;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import javax.swing.JOptionPane;
-/**
- *
- * @author RUDY ICAFE
- */
+import config.Session; 
 public class adminprofile extends javax.swing.JFrame {
     
 
     /** Creates new form adminprofile */
     public adminprofile() {
         initComponents();
-        
-        loadadminprofile(); 
+
+    if(Session.getUserId() == 0){
+        JOptionPane.showMessageDialog(this,"Please login first!");
+        new Main.login().setVisible(true);
+        dispose();
+        return;
+    }
+
+    loadadminprofile();
     }
 
     private void loadadminprofile() {
-    int userId = Main.Session.userId; // ID of logged-in admin
+    int userId = Session.getUserId(); // ID of logged-in admin
 
     String sql = "SELECT u_id, u_fname, u_lname, u_email, u_status FROM tbl_accounts WHERE u_id = ?";
 
@@ -33,7 +37,7 @@ public class adminprofile extends javax.swing.JFrame {
         if (rs.next()) {
             jLabel3.setText("Account ID: " + rs.getString("u_id"));
             jLabel4.setText("First Name: " + rs.getString("u_fname"));
-            jLabel6.setText("Last Name: " + rs.getString("u_fname"));
+            jLabel6.setText("Last Name: " + rs.getString("u_lname"));
             jLabel5.setText("Email: " + rs.getString("u_email"));
             jLabel2.setText("Status: " + rs.getString("u_status"));
         }

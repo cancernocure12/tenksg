@@ -1,5 +1,5 @@
 
-package Main;
+package config;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -92,6 +92,7 @@ public class config {
     public void executeSQL(String sql) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
     
 }
     

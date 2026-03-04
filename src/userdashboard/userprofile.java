@@ -1,7 +1,7 @@
 
 package userdashboard;
-import Main.Session;
-import Main.config;
+import config.Session;
+import config.config;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +12,13 @@ public class userprofile extends javax.swing.JFrame {
     
     public userprofile() {
         initComponents();
+        
+        if (Session.getUserId() == 0) {
+    new Main.login().setVisible(true);
+    dispose();
+    return;
+}
+        
         loadAccountSettings();
     }
 
@@ -70,6 +77,11 @@ public class userprofile extends javax.swing.JFrame {
         jPanel2.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 290, 120, 30));
 
         jButton5.setText("Logout");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
         jPanel2.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 410, -1, -1));
 
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 570));
@@ -126,6 +138,12 @@ public class userprofile extends javax.swing.JFrame {
          this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+              Session.logout();   // clear session properly
+    new Main.landing().setVisible(true);
+    this.dispose();
+    }//GEN-LAST:event_jButton5ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -163,7 +181,7 @@ public class userprofile extends javax.swing.JFrame {
 
     private void loadAccountSettings() {
 
-    int userId = Main.Session.userId; // WHO IS LOGGED IN
+    int userId = Session.getUserId(); // WHO IS LOGGED IN
 
     String sql = "SELECT u_id, u_fname, u_lname, u_email, u_status " +
                  "FROM tbl_accounts WHERE u_id = ?";

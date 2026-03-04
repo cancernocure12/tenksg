@@ -1,15 +1,29 @@
 
 package userdashboard;
 import Main.landing;
-
+import config.SessionManager;
+import config.SessionManager;
 public class userdashboard extends javax.swing.JFrame {
 
    
+
     public userdashboard() {
+        
+        
         initComponents();
+
+    if(!SessionManager.checkUser(this)){
+        return;
+    }
+        
+        if(config.Session.getUserId() == 0){
+        new Main.login().setVisible(true);
+        dispose();
+    }
+        
     }
 
-   
+    
     
     
     
@@ -18,50 +32,20 @@ public class userdashboard extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPanel1 = new javax.swing.JPanel();
+        jPanel4 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(153, 153, 153));
         setPreferredSize(new java.awt.Dimension(800, 500));
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        jPanel3.setBackground(new java.awt.Color(11, 61, 11));
-        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        jButton1.setText("HOME");
-        jPanel3.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 130, 120, 30));
-
-        jButton2.setText("BOOK NOW");
-        jPanel3.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 180, 120, 30));
-
-        jButton3.setText("MY Appointments");
-        jPanel3.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 230, 120, 30));
-
-        jButton4.setText("MY Profile");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
-            }
-        });
-        jPanel3.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 290, 120, 30));
-
-        jButton5.setText("Logout");
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
-            }
-        });
-        jPanel3.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 410, -1, -1));
-
-        getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 210, 600));
 
         jPanel1.setBackground(new java.awt.Color(153, 153, 153));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -73,9 +57,49 @@ public class userdashboard extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Segoe UI Black", 0, 36)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("USER DASHBOARD");
-        jPanel4.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 20, -1, -1));
+        jPanel4.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 10, -1, -1));
 
-        jPanel1.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 50, 450, 90));
+        jPanel1.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 10, 450, 90));
+
+        jPanel3.setBackground(new java.awt.Color(11, 61, 11));
+        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jButton1.setText("DASHBOARD");
+        jPanel3.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 130, 200, 40));
+
+        jButton2.setText("BOOK NOW");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+        jPanel3.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 190, 200, 40));
+
+        jButton3.setText("MY TRANSACTIONS");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+        jPanel3.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(-10, 250, 210, 40));
+
+        jButton4.setText("MY Profile");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+        jPanel3.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 320, 200, 40));
+
+        jButton5.setText("Logout");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+        jPanel3.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 460, -1, -1));
+
+        jPanel1.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, 600));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 860, 600));
 
@@ -89,11 +113,26 @@ public class userdashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+    
+   config.Session.logout();   // ✅ clears entire session
+    
     landing lp = new landing();
     lp.setVisible(true);
     lp.setLocationRelativeTo(null); 
     this.dispose();
     }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+      booking bk = new booking();
+    bk.setVisible(true);
+    this.dispose();  
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+     userstransactions ut = new userstransactions();
+    ut.setVisible(true);
+    this.dispose();
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -141,4 +180,5 @@ public class userdashboard extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     // End of variables declaration//GEN-END:variables
+
 }
