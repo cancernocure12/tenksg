@@ -8,7 +8,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JTable;
 import net.proteanit.sql.DbUtils;
-
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 
 public class config {
     public static Connection connectDB() {
@@ -21,6 +23,8 @@ public class config {
             System.out.println("Connection Failed: " + e);
         }
         return con;
+        
+        
     }
     
     public void addRecord(String sql, Object... values) {
@@ -93,7 +97,131 @@ public class config {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    
+    public static String hashPassword(String password) {
+    try {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    } catch (NoSuchAlgorithmException e) {
+        e.printStackTrace();
+        return password;
+    }
+}
+
+public static boolean verifyPassword(String inputPassword, String storedHash) {
+    String inputHash = hashPassword(inputPassword);
+    return inputHash.equals(storedHash);
+}
+
+// ==================== DASHBOARD STATISTICS ====================
+public static int getTotalUsers() {
+    int count = 0;
+    try {
+        Connection conn = connectDB();
+        String sql = "SELECT COUNT(*) FROM tbl_accounts WHERE u_role != 'admin'";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            count = rs.getInt(1);
+        }
+        conn.close();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return count;
+}
+
+public static int getTotalCabins() {
+    int count = 0;
+    try {
+        Connection conn = connectDB();
+        String sql = "SELECT COUNT(*) FROM tbl_cabins";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            count = rs.getInt(1);
+        }
+        conn.close();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return count;
+}
+
+public static int getTotalBookings() {
+    int count = 0;
+    try {
+        Connection conn = connectDB();
+        String sql = "SELECT COUNT(*) FROM tbl_transactions";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            count = rs.getInt(1);
+        }
+        conn.close();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return count;
+}
+
+public static int getAvailableCabins() {
+    int count = 0;
+    try {
+        Connection conn = connectDB();
+        String sql = "SELECT COUNT(*) FROM tbl_cabins WHERE c_status = 'Available'";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            count = rs.getInt(1);
+        }
+        conn.close();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return count;
+}
+
+public static int getOccupiedCabins() {
+    int count = 0;
+    try {
+        Connection conn = connectDB();
+        String sql = "SELECT COUNT(*) FROM tbl_cabins WHERE c_status = 'Occupied'";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            count = rs.getInt(1);
+        }
+        conn.close();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return count;
+}
+
+public static int getActiveGuests() {
+    int count = 0;
+    try {
+        Connection conn = connectDB();
+        String sql = "SELECT COUNT(*) FROM tbl_guests WHERE g_status = 'Active'";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            count = rs.getInt(1);
+        }
+        conn.close();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return count;
+}
+
 }
     
     

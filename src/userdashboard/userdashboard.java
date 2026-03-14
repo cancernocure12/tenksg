@@ -3,15 +3,24 @@ package userdashboard;
 import Main.landing;
 import config.SessionManager;
 import config.SessionManager;
-public class userdashboard extends javax.swing.JFrame {
+import config.Session;
+import config.guestinfo;
+import java.sql.*;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
+
+
+
+public class userdashboard extends javax.swing.JFrame {
+DefaultTableModel model;
    
 
     public userdashboard() {
         
         
         initComponents();
-
+        setLocationRelativeTo(null);
     if(!SessionManager.checkUser(this)){
         return;
     }
