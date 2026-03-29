@@ -17,7 +17,7 @@ public class checkinhistory extends javax.swing.JFrame {
     public checkinhistory() {
         initComponents();
         setLocationRelativeTo(null);
-        loadHistory();
+       
     }
    
     

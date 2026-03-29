@@ -40,5 +40,5 @@ public class SessionManager {
         }
 
         return true;
-        }
+    }
 }

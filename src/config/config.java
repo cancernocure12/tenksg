@@ -1,4 +1,3 @@
-
 package config;
 
 import java.sql.Connection;
@@ -13,226 +12,268 @@ import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 
 public class config {
+
+    // ================= DATABASE CONNECTION =================
     public static Connection connectDB() {
-        Connection con = null;
         try {
-            Class.forName("org.sqlite.JDBC"); // Load the SQLite JDBC driver
-            con = DriverManager.getConnection("jdbc:sqlite:forest.db"); // Establish connection
-            System.out.println("Connection Successful");
+            Class.forName("org.sqlite.JDBC");
+            return DriverManager.getConnection("jdbc:sqlite:forest.db");
         } catch (Exception e) {
-            System.out.println("Connection Failed: " + e);
+            System.out.println("Database Connection Error: " + e.getMessage());
+            return null;
         }
-        return con;
-        
-        
     }
-    
+
+    // ================= INSERT RECORD =================
     public void addRecord(String sql, Object... values) {
-    try (Connection conn = this.connectDB(); // Use the connectDB method
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        // Loop through the values and set them in the prepared statement dynamically
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] instanceof Integer) {
-                pstmt.setInt(i + 1, (Integer) values[i]); // If the value is Integer
-            } else if (values[i] instanceof Double) {
-                pstmt.setDouble(i + 1, (Double) values[i]); // If the value is Double
-            } else if (values[i] instanceof Float) {
-                pstmt.setFloat(i + 1, (Float) values[i]); // If the value is Float
-            } else if (values[i] instanceof Long) {
-                pstmt.setLong(i + 1, (Long) values[i]); // If the value is Long
-            } else if (values[i] instanceof Boolean) {
-                pstmt.setBoolean(i + 1, (Boolean) values[i]); // If the value is Boolean
-            } else if (values[i] instanceof java.util.Date) {
-                pstmt.setDate(i + 1, new java.sql.Date(((java.util.Date) values[i]).getTime())); // If the value is Date
-            } else if (values[i] instanceof java.sql.Date) {
-                pstmt.setDate(i + 1, (java.sql.Date) values[i]); // If it's already a SQL Date
-            } else if (values[i] instanceof java.sql.Timestamp) {
-                pstmt.setTimestamp(i + 1, (java.sql.Timestamp) values[i]); // If the value is Timestamp
-            } else {
-                pstmt.setString(i + 1, values[i].toString()); // Default to String for other types
+        try (Connection conn = connectDB();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            for (int i = 0; i < values.length; i++) {
+                pstmt.setObject(i + 1, values[i]);
             }
-        }
 
-        pstmt.executeUpdate();
-        System.out.println("Record added successfully!");
-    } catch (SQLException e) {
-        System.out.println("Error adding record: " + e.getMessage());
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.out.println("Add Record Error: " + e.getMessage());
+        }
     }
-}
-    public boolean authenticate(String sql, Object... values) {
-    try (Connection conn = connectDB();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        for (int i = 0; i < values.length; i++) {
-            pstmt.setObject(i + 1, values[i]);
-        }
+    // ================= EXECUTE UPDATE/DELETE =================
+    public void executeSQL(String sql, Object... values) {
 
-        try (ResultSet rs = pstmt.executeQuery()) {
-            if (rs.next()) {
-                return true;
+        try (Connection conn = connectDB();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            for (int i = 0; i < values.length; i++) {
+                pstmt.setObject(i + 1, values[i]);
             }
+
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.out.println("SQL Execution Error: " + e.getMessage());
         }
-    } catch (SQLException e) {
-        System.out.println("Login Error: " + e.getMessage());
     }
-    return false;
-}
-    
-   public void displayData(String sql, JTable table) {
-        try (Connection conn = connectDB()) {
-            if (conn == null) {
-                System.out.println("Connection is null! Cannot display data.");
-                return;
-            }
+
+    // ================= SELECT DATA =================
+    public ResultSet getData(String sql, Object... values) {
+
+        try {
+            Connection conn = connectDB();
             PreparedStatement pstmt = conn.prepareStatement(sql);
+
+            for (int i = 0; i < values.length; i++) {
+                pstmt.setObject(i + 1, values[i]);
+            }
+
+            return pstmt.executeQuery();
+
+        } catch (SQLException e) {
+            System.out.println("Query Error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // ================= LOGIN AUTHENTICATION =================
+    public boolean authenticate(String sql, Object... values) {
+
+        try (Connection conn = connectDB();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            for (int i = 0; i < values.length; i++) {
+                pstmt.setObject(i + 1, values[i]);
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Login Error: " + e.getMessage());
+        }
+
+        return false;
+    }
+
+    // ================= DISPLAY DATA IN TABLE =================
+    public void displayData(String sql, JTable table, Object... values) {
+
+        try (Connection conn = connectDB();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            for (int i = 0; i < values.length; i++) {
+                pstmt.setObject(i + 1, values[i]);
+            }
+
             ResultSet rs = pstmt.executeQuery();
             table.setModel(DbUtils.resultSetToTableModel(rs));
+
         } catch (SQLException e) {
-            System.out.println("Error displaying data: " + e.getMessage());
+            System.out.println("Display Error: " + e.getMessage());
         }
     }
 
-    public void executeSQL(String sql) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    // ================= PASSWORD HASHING =================
     public static String hashPassword(String password) {
-    try {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) hexString.append('0');
-            hexString.append(hex);
+
+        try {
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+
+            StringBuilder hexString = new StringBuilder();
+
+            for (byte b : hash) {
+
+                String hex = Integer.toHexString(0xff & b);
+
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+
+                hexString.append(hex);
+            }
+
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+
+            e.printStackTrace();
+            return password;
+
         }
-        return hexString.toString();
-    } catch (NoSuchAlgorithmException e) {
-        e.printStackTrace();
-        return password;
     }
-}
 
-public static boolean verifyPassword(String inputPassword, String storedHash) {
-    String inputHash = hashPassword(inputPassword);
-    return inputHash.equals(storedHash);
-}
+    public static boolean verifyPassword(String inputPassword, String storedHash) {
 
-// ==================== DASHBOARD STATISTICS ====================
-public static int getTotalUsers() {
-    int count = 0;
-    try {
-        Connection conn = connectDB();
-        String sql = "SELECT COUNT(*) FROM tbl_accounts WHERE u_role != 'admin'";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next()) {
-            count = rs.getInt(1);
+        String inputHash = hashPassword(inputPassword);
+        return inputHash.equals(storedHash);
+
+    }
+
+    // ================= DASHBOARD STATISTICS =================
+
+    public static int getTotalUsers() {
+
+        int count = 0;
+
+        try (Connection conn = connectDB();
+             PreparedStatement pst = conn.prepareStatement(
+             "SELECT COUNT(*) FROM tbl_accounts WHERE u_role != 'admin'");
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        conn.close();
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return count;
-}
 
-public static int getTotalCabins() {
-    int count = 0;
-    try {
-        Connection conn = connectDB();
-        String sql = "SELECT COUNT(*) FROM tbl_cabins";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next()) {
-            count = rs.getInt(1);
+        return count;
+    }
+
+    public static int getTotalCabins() {
+
+        int count = 0;
+
+        try (Connection conn = connectDB();
+             PreparedStatement pst = conn.prepareStatement(
+             "SELECT COUNT(*) FROM tbl_cabins");
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        conn.close();
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return count;
-}
 
-public static int getTotalBookings() {
-    int count = 0;
-    try {
-        Connection conn = connectDB();
-        String sql = "SELECT COUNT(*) FROM tbl_transactions";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next()) {
-            count = rs.getInt(1);
+        return count;
+    }
+
+    public static int getTotalBookings() {
+
+        int count = 0;
+
+        try (Connection conn = connectDB();
+             PreparedStatement pst = conn.prepareStatement(
+             "SELECT COUNT(*) FROM tbl_transactions");
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        conn.close();
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return count;
-}
 
-public static int getAvailableCabins() {
-    int count = 0;
-    try {
-        Connection conn = connectDB();
-        String sql = "SELECT COUNT(*) FROM tbl_cabins WHERE c_status = 'Available'";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next()) {
-            count = rs.getInt(1);
+        return count;
+    }
+
+    public static int getAvailableCabins() {
+
+        int count = 0;
+
+        try (Connection conn = connectDB();
+             PreparedStatement pst = conn.prepareStatement(
+             "SELECT COUNT(*) FROM tbl_cabins WHERE c_status='Available'");
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        conn.close();
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return count;
-}
 
-public static int getOccupiedCabins() {
-    int count = 0;
-    try {
-        Connection conn = connectDB();
-        String sql = "SELECT COUNT(*) FROM tbl_cabins WHERE c_status = 'Occupied'";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next()) {
-            count = rs.getInt(1);
+        return count;
+    }
+
+    public static int getOccupiedCabins() {
+
+        int count = 0;
+
+        try (Connection conn = connectDB();
+             PreparedStatement pst = conn.prepareStatement(
+             "SELECT COUNT(*) FROM tbl_cabins WHERE c_status='Occupied'");
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        conn.close();
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return count;
-}
 
-public static int getActiveGuests() {
-    int count = 0;
-    try {
-        Connection conn = connectDB();
-        String sql = "SELECT COUNT(*) FROM tbl_guests WHERE g_status = 'Active'";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next()) {
-            count = rs.getInt(1);
+        return count;
+    }
+
+    public static int getActiveGuests() {
+
+        int count = 0;
+
+        try (Connection conn = connectDB();
+             PreparedStatement pst = conn.prepareStatement(
+             "SELECT COUNT(*) FROM tbl_guests WHERE g_status='Active'");
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        conn.close();
-    } catch (SQLException e) {
-        e.printStackTrace();
+
+        return count;
     }
-    return count;
-}
 
 }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-

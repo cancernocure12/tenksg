@@ -24,6 +24,7 @@ public class landing extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         signup = new javax.swing.JButton();
         login = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
 
         jLabel2.setText("jLabel2");
@@ -59,45 +60,34 @@ public class landing extends javax.swing.JFrame {
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 173, -1, -1));
 
         jPanel4.setBackground(new java.awt.Color(0, 0, 0));
+        jPanel4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         signup.setBackground(new java.awt.Color(255, 255, 255));
         signup.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         signup.setText("Sign up");
+        signup.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         signup.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 signupActionPerformed(evt);
             }
         });
+        jPanel4.add(signup, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 30, 120, 40));
 
         login.setBackground(new java.awt.Color(255, 255, 255));
         login.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         login.setText("Login");
+        login.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         login.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loginActionPerformed(evt);
             }
         });
+        jPanel4.add(login, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 30, 110, 40));
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(543, 543, 543)
-                .addComponent(login)
-                .addGap(51, 51, 51)
-                .addComponent(signup)
-                .addContainerGap(396, Short.MAX_VALUE))
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(36, 36, 36)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(signup)
-                    .addComponent(login))
-                .addContainerGap(23, Short.MAX_VALUE))
-        );
+        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 25)); // NOI18N
+        jLabel5.setForeground(new java.awt.Color(204, 204, 204));
+        jLabel5.setText("Welcome to Staycation Booking System!");
+        jPanel4.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 510, 50));
 
         jPanel1.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1160, 90));
 
@@ -173,6 +163,7 @@ public class landing extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;

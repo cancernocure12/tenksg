@@ -52,7 +52,7 @@ private void selectCabinInTable(int cabinId) {
         setPreferredSize(new java.awt.Dimension(860, 700));
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.setBackground(new java.awt.Color(11, 61, 11));
+        jPanel1.setBackground(new java.awt.Color(26, 46, 26));
         jPanel1.setPreferredSize(new java.awt.Dimension(860, 600));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
