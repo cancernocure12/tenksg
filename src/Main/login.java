@@ -148,17 +148,25 @@ public class login extends javax.swing.JFrame {
         return;
     }
 
-    String sql = "SELECT * FROM tbl_accounts WHERE u_email=? AND u_password=?";
+    String sql = "SELECT * FROM tbl_accounts WHERE u_email=?";
 
     try (Connection conn = config.connectDB();
          PreparedStatement pst = conn.prepareStatement(sql)) {
 
         pst.setString(1, email);
-        pst.setString(2, password);
 
         ResultSet rs = pst.executeQuery();
 
         if (rs.next()) {
+            String storedPassword = rs.getString("u_password");
+
+            if (!config.verifyPassword(password, storedPassword)) {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid Email or Password.",
+                        "Login Failed",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             String status = rs.getString("u_status");
             String role   = rs.getString("u_role");

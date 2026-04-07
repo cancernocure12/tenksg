@@ -161,6 +161,22 @@ public class register extends javax.swing.JFrame {
         return;
     }
 
+    if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+        JOptionPane.showMessageDialog(this,
+                "Please enter a valid email address.",
+                "Warning",
+                JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    if (password.length() < 6) {
+        JOptionPane.showMessageDialog(this,
+                "Password must be at least 6 characters.",
+                "Warning",
+                JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
     try (Connection conn = config.connectDB()) {
 
         // Check duplicate email
@@ -186,7 +202,7 @@ public class register extends javax.swing.JFrame {
         pst.setString(1, fname);
         pst.setString(2, lname);
         pst.setString(3, email);
-        pst.setString(4, password);
+        pst.setString(4, config.hashPassword(password));
         pst.setString(5, "Pending");
         pst.setString(6, "USER");
 

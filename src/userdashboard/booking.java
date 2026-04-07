@@ -1,40 +1,52 @@
-
 package userdashboard;
 
-import javax.swing.JOptionPane;
-import javax.swing.JOptionPane;
+import config.Session;
+import config.SessionManager;
+import config.config;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 public class booking extends javax.swing.JFrame {
-private void selectCabinInTable(int cabinId) {
 
-    for (int i = 0; i < jTable1.getRowCount(); i++) {
-        int id = Integer.parseInt(jTable1.getValueAt(i, 0).toString());
+    private void selectCabinInTable(int cabinId) {
+        for (int i = 0; i < jTable1.getRowCount(); i++) {
+            int id = Integer.parseInt(jTable1.getValueAt(i, 0).toString());
 
-        if (id == cabinId) {
-            jTable1.setRowSelectionInterval(i, i);
-            break;
+            if (id == cabinId) {
+                jTable1.setRowSelectionInterval(i, i);
+                break;
+            }
         }
     }
-}
-   public booking() {
-    initComponents();
-    setLocationRelativeTo(null);
-    setSize(860, 600);
-    setResizable(false);
-    loadCabinsTable();
-}
-   public booking(int cabinId) {
-    initComponents();
-    setLocationRelativeTo(null);
-    setSize(860, 600);
-    setResizable(false);
-    loadCabinsTable();
-    selectCabinInTable(cabinId);
-}
-    
+
+    public booking() {
+        initComponents();
+        initializeView();
+    }
+
+    public booking(int cabinId) {
+        initComponents();
+        initializeView();
+        selectCabinInTable(cabinId);
+    }
+
+    private void initializeView() {
+        if (!SessionManager.checkUser(this)) {
+            return;
+        }
+
+        setLocationRelativeTo(null);
+        setSize(980, 650);
+        setResizable(false);
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(
+                new String[]{"Cash", "GCash", "Card"}
+        ));
+        loadCabinsTable();
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -67,12 +79,12 @@ private void selectCabinInTable(int cabinId) {
                 jComboBox1ActionPerformed(evt);
             }
         });
-        jPanel1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 100, 231, 38));
+        jPanel1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 100, 180, 38));
 
         jLabel2.setFont(new java.awt.Font("Segoe UI Black", 0, 24)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setText("BOOK NOW");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(248, 109, -1, -1));
+        jLabel2.setText("PAYMENT METHOD");
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 109, -1, -1));
 
         jButton1.setText("CONFIRM");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -80,33 +92,30 @@ private void selectCabinInTable(int cabinId) {
                 jButton1ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 500, 98, 34));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 520, 98, 34));
 
-        jButton2.setText("CANCEL");
+        jButton2.setText("BACK");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 500, 118, 34));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 520, 118, 34));
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "CABIN ID", "CABIN NAME", "STATUS"
+                "CABIN ID", "CABIN NAME", "DESCRIPTION", "PRICE", "CAPACITY", "STATUS"
             }
         ));
         jScrollPane1.setViewportView(jTable1);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(139, 156, 658, 260));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 156, 800, 320));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 930, 650));
 
@@ -114,69 +123,83 @@ private void selectCabinInTable(int cabinId) {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-    int selectedRow = jTable1.getSelectedRow();
+        int selectedRow = jTable1.getSelectedRow();
 
-    if (selectedRow == -1) {
-        JOptionPane.showMessageDialog(this, "Please select a cabin first!");
-        return;
-    }
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a cabin first!");
+            return;
+        }
 
-    String status = jTable1.getValueAt(selectedRow, 2).toString();
+        String status = jTable1.getValueAt(selectedRow, 5).toString();
 
-    if (!status.equalsIgnoreCase("Available")) {
-        JOptionPane.showMessageDialog(this, "Cabin is not available!");
-        return;
-    }
+        if (!status.equalsIgnoreCase("Available")) {
+            JOptionPane.showMessageDialog(this, "Cabin is not available.");
+            return;
+        }
 
-    int cabinId = Integer.parseInt(
-            jTable1.getValueAt(selectedRow, 0).toString()
-    );
+        int cabinId = Integer.parseInt(jTable1.getValueAt(selectedRow, 0).toString());
+        double amount = Double.parseDouble(jTable1.getValueAt(selectedRow, 3).toString());
+        int userId = Session.getUserId();
+        String paymentMethod = jComboBox1.getSelectedItem().toString();
+        String bookingDate = java.time.LocalDateTime.now().withNano(0).toString().replace('T', ' ');
 
-    int userId = config.Session.getUserId();
-    String currentDate = java.time.LocalDate.now().toString();
+        String existingSql = "SELECT COUNT(*) FROM tbl_transactions "
+                + "WHERE t_uid=? AND t_cid=? AND t_status IN ('Paid','Booked')";
+        String insertSql = "INSERT INTO tbl_transactions "
+                + "(t_uid, t_cid, t_date, t_status, t_amount, t_payment_method, t_notes) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String updateCabinSql = "UPDATE tbl_cabins SET c_status='Occupied' WHERE c_id=?";
 
-    try {
-        Connection conn = config.config.connectDB();
+        try (Connection conn = config.connectDB()) {
+            conn.setAutoCommit(false);
 
-        String sql = "INSERT INTO tbl_transactions (t_uid, t_cid, t_date, t_status) VALUES (?, ?, ?, ?)";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        pst.setInt(1, userId);
-        pst.setInt(2, cabinId);
-        pst.setString(3, currentDate);
-        pst.setString(4, "Booked");
-        pst.executeUpdate();
+            try (PreparedStatement checkPst = conn.prepareStatement(existingSql)) {
+                checkPst.setInt(1, userId);
+                checkPst.setInt(2, cabinId);
 
-        String update = "UPDATE tbl_cabins SET c_status='Occupied' WHERE c_id=?";
-        PreparedStatement pst2 = conn.prepareStatement(update);
-        pst2.setInt(1, cabinId);
-        pst2.executeUpdate();
+                try (ResultSet rs = checkPst.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        JOptionPane.showMessageDialog(this, "You already have an active booking for this cabin.");
+                        conn.rollback();
+                        return;
+                    }
+                }
+            }
 
-        JOptionPane.showMessageDialog(this, "Booking Successful!");
+            try (PreparedStatement insertPst = conn.prepareStatement(insertSql);
+                 PreparedStatement updatePst = conn.prepareStatement(updateCabinSql)) {
 
-        loadCabinsTable(); // refresh table
+                insertPst.setInt(1, userId);
+                insertPst.setInt(2, cabinId);
+                insertPst.setString(3, bookingDate);
+                insertPst.setString(4, "Paid");
+                insertPst.setDouble(5, amount);
+                insertPst.setString(6, paymentMethod);
+                insertPst.setString(7, "Booked and paid by guest");
+                insertPst.executeUpdate();
 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Booking Failed!");
-        e.printStackTrace();
-    }
+                updatePst.setInt(1, cabinId);
+                updatePst.executeUpdate();
+            }
+
+            conn.commit();
+            JOptionPane.showMessageDialog(this, "Booking and payment recorded successfully.");
+            loadCabinsTable();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Booking failed: " + e.getMessage());
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-   this.dispose();
+        this.dispose();
         new userdashboard().setVisible(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
-    
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -193,9 +216,7 @@ private void selectCabinInTable(int cabinId) {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(booking.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
 
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new booking().setVisible(true);
@@ -213,30 +234,31 @@ private void selectCabinInTable(int cabinId) {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
-private void loadCabinsTable() {
 
-    try {
-        Connection conn = config.config.connectDB();
-        String sql = "SELECT c_id, c_name,c_description,c_price, c_status FROM tbl_cabins";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
+    private void loadCabinsTable() {
+        String sql = "SELECT c_id, c_name, c_description, c_price, c_capacity, c_status "
+                + "FROM tbl_cabins ORDER BY c_id";
 
-        javax.swing.table.DefaultTableModel model =
-                (javax.swing.table.DefaultTableModel) jTable1.getModel();
+        try (Connection conn = config.connectDB();
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
 
-        model.setRowCount(0);
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            model.setRowCount(0);
 
-        while (rs.next()) {
-            model.addRow(new Object[]{
-                rs.getInt("c_id"),
-                rs.getString("c_name"),
-                rs.getString("c_status")
-            });
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getInt("c_id"),
+                    rs.getString("c_name"),
+                    rs.getString("c_description"),
+                    rs.getDouble("c_price"),
+                    rs.getInt("c_capacity"),
+                    rs.getString("c_status")
+                });
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error loading cabins: " + e.getMessage());
         }
-
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error loading cabins!");
-        e.printStackTrace();
     }
-}
 }

@@ -1,6 +1,8 @@
 
 package admindashboard;
+import Main.landing;
 import config.SessionManager;
+import config.Session;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -164,6 +166,11 @@ jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(
 
         jButton7.setFont(new java.awt.Font("Segoe UI Black", 0, 20)); // NOI18N
         jButton7.setText("Booking");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
         jPanel2.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 390, 160, 50));
 
         jButton6.setFont(new java.awt.Font("Segoe UI Black", 0, 20)); // NOI18N
@@ -371,7 +378,8 @@ jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        // TODO add your handling code here:
+        new admindashboard().setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
@@ -393,8 +401,15 @@ jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-
+        Session.logout();
+        new landing().setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {
+        new admintransactions().setVisible(true);
+        dispose();
+    }
 
     
     public static void main(String args[]) {

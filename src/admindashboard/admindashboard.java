@@ -72,6 +72,11 @@ public class admindashboard extends javax.swing.JFrame {
 
         jButton7.setFont(new java.awt.Font("Segoe UI Black", 0, 20)); // NOI18N
         jButton7.setText("Booking");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
         jPanel2.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 390, 160, 50));
 
         jButton2.setFont(new java.awt.Font("Segoe UI Black", 0, 22)); // NOI18N
@@ -185,8 +190,13 @@ public class admindashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-    
+
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {
+        new admintransactions().setVisible(true);
+        dispose();
+    }
 
     /**
      * @param args the command line arguments

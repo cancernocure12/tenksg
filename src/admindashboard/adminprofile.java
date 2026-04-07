@@ -1,11 +1,13 @@
 
 package admindashboard;
+import Main.landing;
 import config.config;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import javax.swing.JOptionPane;
 import config.Session; 
+import config.SessionManager;
 public class adminprofile extends javax.swing.JFrame {
     
 
@@ -13,10 +15,7 @@ public class adminprofile extends javax.swing.JFrame {
     public adminprofile() {
         initComponents();
 
-    if(Session.getUserId() == 0){
-        JOptionPane.showMessageDialog(this,"Please login first!");
-        new Main.login().setVisible(true);
-        dispose();
+    if(!SessionManager.checkAdmin(this)){
         return;
     }
 
@@ -149,6 +148,11 @@ public class adminprofile extends javax.swing.JFrame {
 
         jButton7.setFont(new java.awt.Font("Segoe UI Black", 0, 20)); // NOI18N
         jButton7.setText("Booking");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
         jPanel2.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 390, 160, 50));
 
         jButton5.setFont(new java.awt.Font("Segoe UI Black", 0, 20)); // NOI18N
@@ -241,7 +245,8 @@ public class adminprofile extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
+        new admindashboard().setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -264,9 +269,14 @@ public class adminprofile extends javax.swing.JFrame {
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         Session.logout();  // clear session
-
-        
+        new landing().setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {
+        new admintransactions().setVisible(true);
+        dispose();
+    }
 
     /**
      * @param args the command line arguments

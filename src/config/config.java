@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import javax.swing.JTable;
 import net.proteanit.sql.DbUtils;
 import java.security.MessageDigest;
@@ -13,15 +14,144 @@ import java.nio.charset.StandardCharsets;
 
 public class config {
 
+    private static boolean initialized = false;
+
     // ================= DATABASE CONNECTION =================
     public static Connection connectDB() {
         try {
             Class.forName("org.sqlite.JDBC");
-            return DriverManager.getConnection("jdbc:sqlite:forest.db");
+            Connection conn = DriverManager.getConnection("jdbc:sqlite:forest.db");
+            initializeDatabase(conn);
+            return conn;
         } catch (Exception e) {
             System.out.println("Database Connection Error: " + e.getMessage());
             return null;
         }
+    }
+
+    private static synchronized void initializeDatabase(Connection conn) throws SQLException {
+        if (initialized) {
+            return;
+        }
+
+        try (Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS tbl_accounts ("
+                    + "u_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "u_fname TEXT NOT NULL,"
+                    + "u_lname TEXT NOT NULL,"
+                    + "u_email TEXT NOT NULL UNIQUE,"
+                    + "u_password TEXT NOT NULL,"
+                    + "u_role TEXT NOT NULL DEFAULT 'USER',"
+                    + "u_status TEXT NOT NULL DEFAULT 'Pending'"
+                    + ")");
+
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS tbl_cabins ("
+                    + "c_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "c_name TEXT NOT NULL,"
+                    + "c_description TEXT NOT NULL DEFAULT '',"
+                    + "c_price REAL NOT NULL DEFAULT 0,"
+                    + "c_capacity INTEGER NOT NULL DEFAULT 1,"
+                    + "c_status TEXT NOT NULL DEFAULT 'Available'"
+                    + ")");
+
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS tbl_transactions ("
+                    + "t_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "t_uid INTEGER NOT NULL,"
+                    + "t_cid INTEGER NOT NULL,"
+                    + "t_date TEXT NOT NULL,"
+                    + "t_status TEXT NOT NULL DEFAULT 'Booked',"
+                    + "t_amount REAL NOT NULL DEFAULT 0,"
+                    + "t_payment_method TEXT NOT NULL DEFAULT 'Cash',"
+                    + "t_notes TEXT NOT NULL DEFAULT '',"
+                    + "FOREIGN KEY (t_uid) REFERENCES tbl_accounts(u_id),"
+                    + "FOREIGN KEY (t_cid) REFERENCES tbl_cabins(c_id)"
+                    + ")");
+        }
+
+        ensureColumn(conn, "tbl_accounts", "u_role", "TEXT NOT NULL DEFAULT 'USER'");
+        ensureColumn(conn, "tbl_accounts", "u_status", "TEXT NOT NULL DEFAULT 'Pending'");
+        ensureColumn(conn, "tbl_cabins", "c_description", "TEXT NOT NULL DEFAULT ''");
+        ensureColumn(conn, "tbl_cabins", "c_price", "REAL NOT NULL DEFAULT 0");
+        ensureColumn(conn, "tbl_cabins", "c_capacity", "INTEGER NOT NULL DEFAULT 1");
+        ensureColumn(conn, "tbl_cabins", "c_status", "TEXT NOT NULL DEFAULT 'Available'");
+        ensureColumn(conn, "tbl_transactions", "t_amount", "REAL NOT NULL DEFAULT 0");
+        ensureColumn(conn, "tbl_transactions", "t_payment_method", "TEXT NOT NULL DEFAULT 'Cash'");
+        ensureColumn(conn, "tbl_transactions", "t_notes", "TEXT NOT NULL DEFAULT ''");
+
+        migrateLegacyPasswords(conn);
+        seedDefaultAdmin(conn);
+        initialized = true;
+    }
+
+    private static void ensureColumn(Connection conn, String tableName, String columnName, String definition)
+            throws SQLException {
+        boolean exists = false;
+
+        try (PreparedStatement pst = conn.prepareStatement("PRAGMA table_info(" + tableName + ")");
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                if (columnName.equalsIgnoreCase(rs.getString("name"))) {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        if (!exists) {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition);
+            }
+        }
+    }
+
+    private static void migrateLegacyPasswords(Connection conn) throws SQLException {
+        String sql = "SELECT u_id, u_password FROM tbl_accounts";
+        String updateSql = "UPDATE tbl_accounts SET u_password=? WHERE u_id=?";
+
+        try (PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery();
+             PreparedStatement updatePst = conn.prepareStatement(updateSql)) {
+
+            while (rs.next()) {
+                int userId = rs.getInt("u_id");
+                String storedPassword = rs.getString("u_password");
+
+                if (storedPassword != null && !isSha256Hash(storedPassword)) {
+                    updatePst.setString(1, hashPassword(storedPassword));
+                    updatePst.setInt(2, userId);
+                    updatePst.executeUpdate();
+                }
+            }
+        }
+    }
+
+    private static void seedDefaultAdmin(Connection conn) throws SQLException {
+        String countSql = "SELECT COUNT(*) FROM tbl_accounts WHERE UPPER(u_role)='ADMIN'";
+
+        try (PreparedStatement pst = conn.prepareStatement(countSql);
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next() && rs.getInt(1) == 0) {
+                String insertSql = "INSERT INTO tbl_accounts "
+                        + "(u_fname, u_lname, u_email, u_password, u_role, u_status) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)";
+
+                try (PreparedStatement insertPst = conn.prepareStatement(insertSql)) {
+                    insertPst.setString(1, "System");
+                    insertPst.setString(2, "Administrator");
+                    insertPst.setString(3, "admin@staycation.local");
+                    insertPst.setString(4, hashPassword("admin123"));
+                    insertPst.setString(5, "ADMIN");
+                    insertPst.setString(6, "Approved");
+                    insertPst.executeUpdate();
+                }
+            }
+        }
+    }
+
+    public static boolean isSha256Hash(String value) {
+        return value != null && value.matches("^[a-fA-F0-9]{64}$");
     }
 
     // ================= INSERT RECORD =================
@@ -262,7 +392,7 @@ public class config {
 
         try (Connection conn = connectDB();
              PreparedStatement pst = conn.prepareStatement(
-             "SELECT COUNT(*) FROM tbl_guests WHERE g_status='Active'");
+             "SELECT COUNT(*) FROM tbl_accounts WHERE UPPER(u_role)='USER' AND UPPER(u_status)='APPROVED'");
              ResultSet rs = pst.executeQuery()) {
 
             if (rs.next()) {

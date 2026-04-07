@@ -1,193 +1,243 @@
-
 package admindashboard;
+
+import Main.landing;
+import config.Session;
+import config.SessionManager;
 import config.config;
-import javax.swing.*;
-import java.awt.event.*;
-import config.Session; 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.JOptionPane;
+import net.proteanit.sql.DbUtils;
+
 public class usermanagement extends javax.swing.JFrame {
-    config cfg = new config();
-    
+
+    private final config cfg = new config();
+
     public usermanagement() {
-       initComponents();
-       txtsearch.addKeyListener(new java.awt.event.KeyAdapter() {
-    public void keyReleased(java.awt.event.KeyEvent evt) {
-        searchUsers();
-    }
-});
-       cmbfilter.setModel(new javax.swing.DefaultComboBoxModel<>(
-    new String[] { "All", "ADMIN", "USER", "Approved", "Pending" }
-));
+        initComponents();
+        txtsearch.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                searchUsers();
+            }
+        });
+        cmbfilter.setModel(new javax.swing.DefaultComboBoxModel<>(
+                new String[]{"All", "ADMIN", "USER", "Approved", "Pending"}
+        ));
 
-    if(Session.getUserId() == 0){
-        JOptionPane.showMessageDialog(this,"Please login first!");
-        new Main.login().setVisible(true);
-        dispose();
-        return;
-    }
-    if(!Session.isAdmin()){
-    JOptionPane.showMessageDialog(this,"Admin access only!");
-    new Main.login().setVisible(true);
-    dispose();
-    return;
-}
-    setLayout(null); 
-    loadUsers();
+        if (!SessionManager.checkAdmin(this)) {
+            return;
+        }
 
-    
-   
-    }
-private void searchUsers() {
-
-    String keyword = txtsearch.getText().trim();
-    String filter  = cmbfilter.getSelectedItem().toString();
-
-    String sql = "SELECT u_id, u_fname, u_lname, u_status, u_role "
-               + "FROM tbl_accounts WHERE 1=1 ";
-
-    // 🔎 Search by name or email
-    if (!keyword.isEmpty()) {
-        sql += "AND (u_fname LIKE '%" + keyword + "%' "
-            + "OR u_lname LIKE '%" + keyword + "%' "
-            + "OR u_email LIKE '%" + keyword + "%') ";
+        setLayout(null);
+        loadUsers();
     }
 
-    // 🎯 Filter
-    if (!filter.equals("All")) {
+    private void searchUsers() {
+        String keyword = txtsearch.getText().trim();
+        String filter = cmbfilter.getSelectedItem().toString();
 
-        if (filter.equalsIgnoreCase("ADMIN") || filter.equalsIgnoreCase("USER")) {
-            sql += "AND u_role = '" + filter + "' ";
-        } else {
-            sql += "AND u_status = '" + filter + "' ";
+        StringBuilder sql = new StringBuilder(
+                "SELECT u_id, u_fname, u_lname, u_email, u_role, u_status "
+                + "FROM tbl_accounts WHERE 1=1"
+        );
+
+        if (!keyword.isEmpty()) {
+            sql.append(" AND (u_fname LIKE ? OR u_lname LIKE ? OR u_email LIKE ?)");
+        }
+
+        if (!"All".equalsIgnoreCase(filter)) {
+            if ("ADMIN".equalsIgnoreCase(filter) || "USER".equalsIgnoreCase(filter)) {
+                sql.append(" AND UPPER(u_role)=?");
+            } else {
+                sql.append(" AND UPPER(u_status)=?");
+            }
+        }
+
+        try (Connection conn = config.connectDB();
+             PreparedStatement pst = conn.prepareStatement(sql.toString())) {
+
+            int index = 1;
+
+            if (!keyword.isEmpty()) {
+                String pattern = "%" + keyword + "%";
+                pst.setString(index++, pattern);
+                pst.setString(index++, pattern);
+                pst.setString(index++, pattern);
+            }
+
+            if (!"All".equalsIgnoreCase(filter)) {
+                pst.setString(index, filter.toUpperCase());
+            }
+
+            ResultSet rs = pst.executeQuery();
+            jTable1.setModel(DbUtils.resultSetToTableModel(rs));
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Search failed: " + e.getMessage());
         }
     }
 
-    cfg.displayData(sql, jTable1);
-}
     private void loadUsers() {
-        String sql = "SELECT u_id, u_fname, u_lname, u_status FROM tbl_accounts";
-        cfg.displayData(sql, jTable1); // use your NetBeans table
+        String sql = "SELECT u_id, u_fname, u_lname, u_email, u_role, u_status FROM tbl_accounts ORDER BY u_id";
+        cfg.displayData(sql, jTable1);
     }
-    
-    
+
     private void addUser() {
         String fname = JOptionPane.showInputDialog(this, "Enter First Name:");
-    String lname = JOptionPane.showInputDialog(this, "Enter Last Name:");
-    String email = JOptionPane.showInputDialog(this, "Enter Email:");
-    String password = JOptionPane.showInputDialog(this, "Enter Password:");
+        String lname = JOptionPane.showInputDialog(this, "Enter Last Name:");
+        String email = JOptionPane.showInputDialog(this, "Enter Email:");
+        String password = JOptionPane.showInputDialog(this, "Enter Password:");
 
-    if(fname == null || lname == null || email == null || password == null){
-        return;
-    }
+        if (fname == null || lname == null || email == null || password == null) {
+            return;
+        }
 
-    if(fname.isEmpty() || lname.isEmpty() || email.isEmpty() || password.isEmpty()){
-        JOptionPane.showMessageDialog(this, "All fields are required!");
-        return;
-    }
+        fname = fname.trim();
+        lname = lname.trim();
+        email = email.trim();
+        password = password.trim();
 
-    String sql = "INSERT INTO tbl_accounts (u_fname, u_lname, u_email, u_password, u_role, u_status) "
-               + "VALUES (?, ?, ?, ?, ?, ?)";
+        if (fname.isEmpty() || lname.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required!");
+            return;
+        }
 
-    try (java.sql.Connection conn = config.connectDB();
-         java.sql.PreparedStatement pst = conn.prepareStatement(sql)) {
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            JOptionPane.showMessageDialog(this, "Invalid email address!");
+            return;
+        }
 
-        pst.setString(1, fname);
-        pst.setString(2, lname);
-        pst.setString(3, email);
-        pst.setString(4, password);
-        pst.setString(5, "USER");      // default role
-        pst.setString(6, "Pending");  // default status
+        String sql = "INSERT INTO tbl_accounts (u_fname, u_lname, u_email, u_password, u_role, u_status) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
-        pst.executeUpdate();
+        try (Connection conn = config.connectDB();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
 
-        JOptionPane.showMessageDialog(this, "User Added Successfully!");
-        loadUsers();
+            pst.setString(1, fname);
+            pst.setString(2, lname);
+            pst.setString(3, email);
+            pst.setString(4, config.hashPassword(password));
+            pst.setString(5, "USER");
+            pst.setString(6, "Pending");
+            pst.executeUpdate();
 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-        e.printStackTrace();
-    }
+            JOptionPane.showMessageDialog(this, "User added successfully!");
+            loadUsers();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }
 
     private void updateUser() {
-       int selectedRow = jTable1.getSelectedRow();
+        int selectedRow = jTable1.getSelectedRow();
 
-    if (selectedRow == -1) {
-        JOptionPane.showMessageDialog(this, "Select user first!");
-        return;
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Select user first!");
+            return;
+        }
+
+        int userId = Integer.parseInt(jTable1.getValueAt(selectedRow, 0).toString());
+        String currentFname = jTable1.getValueAt(selectedRow, 1).toString();
+        String currentLname = jTable1.getValueAt(selectedRow, 2).toString();
+        String currentEmail = jTable1.getValueAt(selectedRow, 3).toString();
+        String currentRole = jTable1.getValueAt(selectedRow, 4).toString();
+        String currentStatus = jTable1.getValueAt(selectedRow, 5).toString();
+
+        String fname = JOptionPane.showInputDialog(this, "Enter New First Name:", currentFname);
+        String lname = JOptionPane.showInputDialog(this, "Enter New Last Name:", currentLname);
+        String email = JOptionPane.showInputDialog(this, "Enter New Email:", currentEmail);
+        String role = JOptionPane.showInputDialog(this, "Enter Role (ADMIN/USER):", currentRole);
+        String status = JOptionPane.showInputDialog(this, "Enter Status (Approved/Pending):", currentStatus);
+
+        if (fname == null || lname == null || email == null || role == null || status == null) {
+            return;
+        }
+
+        fname = fname.trim();
+        lname = lname.trim();
+        email = email.trim();
+        role = role.trim().toUpperCase();
+        status = status.trim();
+
+        if (fname.isEmpty() || lname.isEmpty() || email.isEmpty() || role.isEmpty() || status.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required!");
+            return;
+        }
+
+        if (!"ADMIN".equals(role) && !"USER".equals(role)) {
+            JOptionPane.showMessageDialog(this, "Role must be ADMIN or USER.");
+            return;
+        }
+
+        if (!status.equalsIgnoreCase("Approved") && !status.equalsIgnoreCase("Pending")) {
+            JOptionPane.showMessageDialog(this, "Status must be Approved or Pending.");
+            return;
+        }
+
+        String normalizedStatus = status.substring(0, 1).toUpperCase() + status.substring(1).toLowerCase();
+        String sql = "UPDATE tbl_accounts SET u_fname=?, u_lname=?, u_email=?, u_role=?, u_status=? WHERE u_id=?";
+
+        try (Connection conn = config.connectDB();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setString(1, fname);
+            pst.setString(2, lname);
+            pst.setString(3, email);
+            pst.setString(4, role);
+            pst.setString(5, normalizedStatus);
+            pst.setInt(6, userId);
+            pst.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "User updated successfully!");
+            loadUsers();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }
 
-    int userId = Integer.parseInt(jTable1.getValueAt(selectedRow, 0).toString());
-
-    String fname = JOptionPane.showInputDialog(this, "Enter New First Name:");
-    String lname = JOptionPane.showInputDialog(this, "Enter New Last Name:");
-    String email = JOptionPane.showInputDialog(this, "Enter New Email:");
-    String role  = JOptionPane.showInputDialog(this, "Enter Role (ADMIN/USER):");
-    String status = JOptionPane.showInputDialog(this, "Enter Status (Approved/Pending):");
-
-    if(fname == null || lname == null || email == null || role == null || status == null){
-        return;
-    }
-
-    String sql = "UPDATE tbl_accounts SET u_fname=?, u_lname=?, u_email=?, u_role=?, u_status=? WHERE u_id=?";
-
-    try (java.sql.Connection conn = config.connectDB();
-         java.sql.PreparedStatement pst = conn.prepareStatement(sql)) {
-
-        pst.setString(1, fname);
-        pst.setString(2, lname);
-        pst.setString(3, email);
-        pst.setString(4, role.trim());
-        pst.setString(5, status.trim());
-        pst.setInt(6, userId);
-
-        pst.executeUpdate();
-
-        JOptionPane.showMessageDialog(this, "User Updated Successfully!");
-        loadUsers();
-
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-        e.printStackTrace();
-    }
-    }
-    
     private void deleteUser() {
-          int selectedRow = jTable1.getSelectedRow();
+        int selectedRow = jTable1.getSelectedRow();
 
-    if (selectedRow == -1) {
-        JOptionPane.showMessageDialog(this, "Select user first!");
-        return;
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Select user first!");
+            return;
+        }
+
+        int userId = Integer.parseInt(jTable1.getValueAt(selectedRow, 0).toString());
+
+        if (userId == Session.getUserId()) {
+            JOptionPane.showMessageDialog(this, "You cannot delete the account you are currently using.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete this user?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        String sql = "DELETE FROM tbl_accounts WHERE u_id=?";
+
+        try (Connection conn = config.connectDB();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setInt(1, userId);
+            pst.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "User deleted successfully!");
+            loadUsers();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }
 
-    int userId = Integer.parseInt(jTable1.getValueAt(selectedRow, 0).toString());
-
-    int confirm = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete this user?",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION);
-
-    if (confirm != JOptionPane.YES_OPTION) {
-        return;
-    }
-
-    String sql = "DELETE FROM tbl_accounts WHERE u_id=?";
-
-    try (java.sql.Connection conn = config.connectDB();
-         java.sql.PreparedStatement pst = conn.prepareStatement(sql)) {
-
-        pst.setInt(1, userId);
-        pst.executeUpdate();
-
-        JOptionPane.showMessageDialog(this, "User Deleted Successfully!");
-        loadUsers();
-
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-        e.printStackTrace();
-    }
-    }
-    
-    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -273,6 +323,11 @@ private void searchUsers() {
 
         jButton7.setFont(new java.awt.Font("Segoe UI Black", 0, 20)); // NOI18N
         jButton7.setText("Booking");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
         jPanel2.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 390, 160, 50));
 
         jButton5.setFont(new java.awt.Font("Segoe UI Black", 0, 20)); // NOI18N
@@ -404,19 +459,19 @@ private void searchUsers() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        addUser();// TODO add your handling code here:
+        addUser();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        updateUser();// TODO add your handling code here:
+        updateUser();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        deleteUser();// TODO add your handling code here:
+        deleteUser();
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void cmbfilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbfilterActionPerformed
-        // TODO add your handling code here:
+        searchUsers();
     }//GEN-LAST:event_cmbfilterActionPerformed
 
     private void btnsearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnsearchActionPerformed
@@ -424,44 +479,44 @@ private void searchUsers() {
     }//GEN-LAST:event_btnsearchActionPerformed
 
     private void txtsearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtsearchActionPerformed
-        // TODO add your handling code here:
+        searchUsers();
     }//GEN-LAST:event_txtsearchActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
+        new admindashboard().setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
         usermanagement um = new usermanagement();
-        um.setVisible(true);          // show the JFrame
-        um.setLocationRelativeTo(null); // optional: center on screen
+        um.setVisible(true);
+        um.setLocationRelativeTo(null);
         this.dispose();
     }//GEN-LAST:event_jButton10ActionPerformed
 
     private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
         cabinmanagement cm = new cabinmanagement();
         cm.setVisible(true);
-        this.dispose(); //// TODO add your handling code here:
+        this.dispose();
     }//GEN-LAST:event_jButton11ActionPerformed
 
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        new admintransactions().setVisible(true);
+        dispose();
+    }//GEN-LAST:event_jButton7ActionPerformed
+
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        new adminprofile().setVisible(true); // open profile
+        new adminprofile().setVisible(true);
         dispose();
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-       
+        Session.logout();
+        new landing().setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton6ActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -478,9 +533,7 @@ private void searchUsers() {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(usermanagement.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
 
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new usermanagement().setVisible(true);
